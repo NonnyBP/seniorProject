@@ -17,30 +17,35 @@ def delta_V(exhaustVelocity, wetMass, dryMass):
 
 # Thrust Principles
 # T = d/dt(m_propellant * v_exit) = m_dot_i * v_i (ion mass flow rate and ion exhaust velocity)
-def massFlowRateOfIons(ionBeamCurrent, ionMass, ionCharge):
-    massFlowRateOfIons = (ionBeamCurrent * ionMass) / ionCharge
+def massFlowRateOfIons(ionBeamCurrent):
+    massFlowRateOfIons = (ionBeamCurrent * c.ionMass) / c.ionCharge
     return massFlowRateOfIons
 
-def ionExhaustVelocity(ionCharge, ionMass, netVoltageAcrossGrids):
-    ionExhaustVelocity = np.sqrt((2 * ionCharge * netVoltageAcrossGrids) / ionMass)
+def ionExhaustVelocity(netVoltageAcrossGrids):
+    ionExhaustVelocity = np.sqrt((2 * c.ionCharge * netVoltageAcrossGrids) / c.ionMass)
     return ionExhaustVelocity
 
 # Notice thrust is proportional to ion beam current * sqrt of acceleration voltage
 # Also used for maximum thrust of beam 
 # ASSUMPTION: UNIDIRECTIONAL SINGLE IONISED BEAM A.K.A PERFECT 
-def thrustForSingleCharge(ionMass, ionCharge, ionBeamCurrent, netVoltageAcrossGrids):
-    thrustForSingleCharge = np.sqrt((2 * ionMass) / ionCharge) * ionBeamCurrent * np.sqrt(netVoltageAcrossGrids)
+def thrustForSingleCharge(ionBeamCurrent, netVoltageAcrossGrids):
+    thrustForSingleCharge = np.sqrt((2 * c.ionMass) / c.ionCharge) * ionBeamCurrent * np.sqrt(netVoltageAcrossGrids)
     return thrustForSingleCharge
 
 # Ion Optics Design Equation (FOR 3-GRID DESIGN) APERTURES MUST BE ALIGNED AND SCREEN GRID + POTENTIAL / ACCEL GRID - POTENTIAL
 #Perveance: Amount of current that an ion accelerator can extract and focus into a beam for a given voltage (space charge limit)
-def perveance(ionCharge, ionMass, screenGridApertureDiameter, distanceBetweenScreenAndAccel):
-    perveance = ((np.pi * c.permittivityOfFreeSpace) / 9) * np.sqrt((2 * ionCharge) / ionMass) * (screenGridApertureDiameter**2 / distanceBetweenScreenAndAccel**2) # in A/V^(3/2)
+def perveance(screenGridApertureDiameter, distanceBetweenScreenAndAccel):
+    perveance = ((np.pi * c.permittivityOfFreeSpace) / 9) * np.sqrt((2 * c.ionCharge) / c.ionMass) * (screenGridApertureDiameter**2 / distanceBetweenScreenAndAccel**2) # in A/V^(3/2)
     return perveance
 
-def maxIonCurrentDensity(voltageDifferenceBetweenScreenAndAccel, distanceBetweenScreenAndAccel):
-    maxIonCurrentDensity = (8.61242 * 10**-9) * ( (voltageDifferenceBetweenScreenAndAccel**(3/2)) / (distanceBetweenScreenAndAccel**2))
+def maxIonCurrentDensity(voltageDifferenceBetweenScreenAndAccel, sheathThickness):
+    maxIonCurrentDensity = ((4 * c.permittivityOfFreeSpace) / 9) * np.sqrt((2* c.ionCharge) / c.ionMass) * ( (voltageDifferenceBetweenScreenAndAccel**(3/2)) / (sheathThickness**2))
     return maxIonCurrentDensity
+
+def sheathThickness():
+    x = (c.distanceBetweenScreenAndAccel + c.screenGridThickness)**2 + ((c.screenGridApertureDiameter**2) / 4)
+    y = np.sqrt(x)
+    return y
 
 def maximumIonBeamCurrent(maxIonCurrentDensity, gridApertureArea):
     maximumIonBeamCurrent = maxIonCurrentDensity * gridApertureArea
@@ -50,19 +55,6 @@ def averageBeamVoltage(screenPotentialVoltage, accelPotentialVoltage):
     averageBeamVoltage = 0.9 * (screenPotentialVoltage + (-1 * accelPotentialVoltage))
     return averageBeamVoltage
 
-
-
-# Ion Optics Design Equations
-#def accelerationlength(screenAcelGap, screenGridThickness, screenGridApertureDiameter):
-#    accelerationLength = np.sqrt(screenAcelGap + screenGridThickness + (screenGridApertureDiameter**2 / 4))
-#    return accelerationLength
-
-#def gridTransparency(beamCurrentThroughGrid, totalIonCurrentGrid):
-#    gridTransparency = (beamCurrentThroughGrid / totalIonCurrentGrid)
-#    return gridTransparency
-# Ion Optics: Normalized Perveance per Hole
-#def NPH(beamCurrentPerHole, screenGridPotential, accelGridPotential, accelerationLength, screenGridApertureDiameter):
-#    totalVoltageBetweenAccelAndScreenGrid = screenGridPotential - accelGridPotential
-#    NPH = (beamCurrentPerHole / totalVoltageBetweenAccelAndScreenGrid**2) * (accelerationLength / screenGridApertureDiameter)**2
-#    return NPH
-    
+def apetureArea(avgBeamVoltage, thrust, singleIonBeamCurrent):
+    apetureArea = thrust / ((np.sqrt( (2 * c.ionMass) / c.ionCharge) ) * np.sqrt(avgBeamVoltage) * singleIonBeamCurrent)
+    return apetureArea    
